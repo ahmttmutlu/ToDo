@@ -1,0 +1,31 @@
+﻿@model AppUser
+<div class="card">
+    <div class="card-header bg-primary bg-gradient text-center text-white">Profil Düzenleme</div>
+    <div class="card-body">
+        <form method="post" asp-action="UpdateProfile" enctype="multipart/form-data">
+
+            <img src="/Files/UserPhotos/@Model.Photo" style="width:150px; height:150px;border-radius:50%" />
+            <label asp-for="Photo">Foto Güncellemek Yeni Foto Seçebilirsiniz</label>
+            <input asp-for="Photo" type="file" class="form-control" />
+
+
+            <input asp-for="Id" hidden />
+            <div class="mb-3 row">
+                <label asp-for="Name" class="form-label">Kullanıcı Adınız</label>
+                <input asp-for="Name" class="form-control" value="@Model.Name" readonly />
+            </div>
+
+            <div class="mb-3 row">
+                <label asp-for="Password" class="form-label">Şifreniz</label>
+                <input asp-for="Password" class="form-control" />
+            </div>
+            <div class="mb-3 row">
+                <button type="submit" class="btn btn-success">Kaydet</button>
+            </div>
+        </form>
+
+
+
+    </div>
+
+</div>

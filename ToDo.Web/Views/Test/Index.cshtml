@@ -1,0 +1,35 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+<input type="file" id="fileFoto" />
+<a href="#" id="btnPost" class="btn btn-primary">Send Form Data</a>
+
+
+@section Scripts {
+    <script>
+        $("#btnPost").click(function () {
+            let formData = new FormData();
+            formData.append("ID", "1");
+            formData.append("Name", "Gà Haha");
+            formData.append("Foto", $('#fileFoto').prop('files')[0])
+
+
+            console.log(formData);
+
+
+            $.ajax({
+                url: '/test/deneme',
+                type: 'POST',
+                contentType: false,
+                processData: false,
+                data: formData,
+                success: function () {
+
+                }
+            });
+
+        });
+    </script>
+}

@@ -1,0 +1,191 @@
+﻿
+
+<div class="card">
+    <div class="card-header bg-primary bg-gradient text-white text-center">Kullanıcı Listesi</div>
+    <div class="card-body">
+        <a href="#" id="btnEkle" class="btn btn-success"> Ekle </a>
+        <table id="tblUsers" class="table table-bordered table-striped table-hover">
+        </table>
+    </div>
+</div>
+
+
+<div class="modal fade" id="modalEkle" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-sm"
+         role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitleId">
+                    Kullanıcı Ekleme Formu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3 row">
+                    <input type="text" id="txtUsername" placeholder="Kullanıcı Adı giriniz" class="form-control" />
+                </div>
+                <div class="mb-3 row">
+                    <input type="text" id="txtPassword" placeholder="Şifre belirleyiniz." class="form-control" />
+                </div>
+
+                <div class="mb-3 row">
+                    <div class="form-check form-check-inline">
+                        <label class="form-check-label" for="">Is Admin ?</label>
+                        <input class="form-check-input" type="checkbox" id="chkIsAdmin" value="1" />
+
+                    </div>
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat </button>
+                <button type="button" id="btnKaydet" class="btn btn-primary">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+        $("#btnEkle").click(function () {
+            $("#modalEkle").modal("show");
+            $("#modalEkle .form-control").val('');
+            $("#modalEkle .form-check-input").prop("checked", false);
+
+
+            $("#btnKaydet").off().click(function () {
+
+                $.ajax({
+                    url: '/User/Add',
+                    type: 'POST',
+                    data: {
+                        user: {
+                            name: $("#txtUsername").val(),
+                            password: $("#txtPassword").val(),
+                            isAdmin: $("#chkIsAdmin").prop("checked")
+                        }
+                    },
+                    success: function (res) {
+                        res.todoCount = 0;
+
+                        DataTable.row.add(res).draw();
+                        $("#modalEkle").modal("hide");
+
+
+
+                    }
+                });
+
+            });
+
+        });
+
+
+
+
+
+
+        var DataTable = $("#tblUsers").DataTable({
+            ajax: '/User/GetAll',
+            columns: [
+                { data: 'id', title: 'ID' },
+                {
+                    data: 'photo', title: 'Foto', render: function (data) {
+
+                        return `<div class="text-center"><img src="/Files/UserPhotos/${data}" style="width:100px;height:100px;border-radius:50%" border="0"></div>`;
+                    }
+                },
+                { data: 'name', title: 'Kullanıcı Adı' },
+                { data: 'password', title: 'Şifre' },
+                { data: 'todoCount', title: 'Toplam Todo' },
+                {
+                    data: 'id', title: 'İşlemler', render: function (data, type, row) {
+                        return `<a onclick="deleteUser(${data},this)" href="#" class="btn btn-sm btn-danger">Sil</a>
+                                             <a href="#" onclick="updateUser(${data},this)" class="btn btn-success btn-sm">Düzenle</a>`;
+                    }
+                }
+            ]
+        });
+
+
+        function deleteUser(userId, button) {
+
+            if (confirm("Silmek istediğinize emin misiniz ?")) {
+                let satir = $(button).parent().parent();
+                $.ajax({
+                    url: '/User/Delete',
+                    type: 'POST',
+                    data: {
+                        user: {
+                            id: userId
+                        }
+                    },
+                    success: function () {
+                        DataTable.row(satir).remove().draw();
+                    }
+                });
+            }
+
+        }
+
+        function updateUser(userId, button) {
+            let satir = $(button).parent().parent();
+
+
+            let dataRow = DataTable.row(satir).data();
+
+
+            $("#modalEkle").modal("show");
+            let todoCount = 0;
+            // $.ajax({
+            //     url: '/User/GetById',
+            //     type: 'POST',
+            //     data: {
+            //         id: userId
+            //     },
+            //     success: function (res) {
+            //         $("#txtUsername").val(res.name);
+            //         $("#txtPassword").val(res.password);
+            //         $("#chkIsAdmin").prop("checked", res.isAdmin);
+            //         todoCount = res.todoCount;
+            //     }
+            // });
+
+            $("#txtUsername").val(dataRow.name);
+            $("#txtPassword").val(dataRow.password);
+            $("#chkIsAdmin").prop("checked", dataRow.isAdmin);
+
+
+            $("#btnKaydet").off().click(function () {
+
+                let nesne = {
+                    id: userId,
+                    name: $("#txtUsername").val(),
+                    password: $("#txtPassword").val(),
+                    isAdmin: $("#chkIsAdmin").prop("checked"),
+                    todoCount: todoCount
+                };
+
+                $.ajax({
+                    url: '/User/Update',
+                    type: 'POST',
+                    data: nesne,
+                    success: function () {
+                        $("#modalEkle").modal("hide");
+
+                        DataTable.row(satir).data(nesne).draw();
+
+                    }
+                });
+
+            });
+
+
+
+
+        }
+
+    </script>
+}

@@ -1,0 +1,53 @@
+﻿<div id="content" class="d-flex p-2">
+</div>
+
+@section Scripts {
+    <script>
+        $(document).ready(function () {
+
+            $.ajax({
+                url: '/Todo/GetAll',
+                type: 'GET',
+                success: function (res) {
+
+                    for (let item of res.data) {
+                        $("#content").append(`
+                                                <div class="card col-2 me-2">
+                                                <div class="card-header text-white text-center bg-${item.priorityColor}">${item.name}</div>
+                                                <div class="card-body">
+                                                        ${item.description}<br />
+                                                        ${item.tags.map(tag => { return '#' + tag.name + ' ' })}
+                                                </div>
+                                                <div class="card-footer text-center"><a href="#" onclick="complete(${item.id},this)" class="btn btn-sm btn-success">Tamamlandı</a></div>
+                                            </div>
+                                                    `);
+                    }
+
+
+                }
+
+            });
+
+
+
+
+
+        });
+
+
+
+        function complete(todoId, button) {
+            $.ajax({
+                url: '/Todo/Complete',
+                type: 'POST',
+                data: {
+                    todoId: todoId
+                },
+                success: function () {
+                    $(button).parent().parent().fadeOut(2000);
+                }
+            });
+        }
+
+    </script>
+}

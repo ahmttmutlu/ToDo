@@ -1,0 +1,253 @@
+﻿@using System.Security.Claims
+<div class="card">
+    <div class="card-header bg-gradient bg-primary text-white text-center">
+        Todo Listesi
+    </div>
+    <div class="card-body">
+        <a href="#" id="btnEkle" class="btn btn-success">EKLE</a>
+        <a asp-controller="Todo" asp-action="Index2" class="btn btn-success">Kutu Görünüm</a>
+
+        <table id="tblTodos" class="table table-striped table-hover table-bordered">
+        </table>
+
+
+    </div>
+
+</div>
+
+
+<div class="modal fade" id="modalEkle" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false" role="dialog" aria-labelledby="modalTitleId" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-scrollable modal-dialog-centered modal-lg"
+         role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalTitleId">
+                    Görev Ekleme Formu
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+
+                <div class="mb-3 row">
+                    <input type="text" id="txtBaslik" placeholder="Başlık giriniz" class="form-control" />
+                </div>
+                <div class="mb-3 row">
+                    <textarea id="txtAciklama" rows="3" placeholder="Bir açıklama giriniz" class="form-control"></textarea>
+                </div>
+                <div class="mb-3 row">
+
+                    <select id="ddlDurumlar" class="form-select">
+                    </select>
+
+                </div>
+                <div class="mb-3 row">
+
+                    <select id="ddlOncelikler" class="form-select">
+                    </select>
+
+                </div>
+
+                <div class="mb-3 row">
+
+                    <select id="ddlEtiketler" multiple class="form-select">
+                    </select>
+
+                </div>
+
+
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Kapat </button>
+                <button type="button" id="btnKaydet" class="btn btn-primary">Kaydet</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        $("#btnEkle").click(function () {
+            $("#modalEkle").modal("show");
+            $("#modalEkle .form-control").val('');
+            durumlariDoldur();
+            etiketleriDoldur();
+            oncelikleriDoldur();
+
+            $("#btnKaydet").click(function () {
+                $.ajax({
+                    url:'/Todo/Add',
+                    type:'POST',
+                    data: {
+                        todo: {
+                            name:$("#txtBaslik").val(),
+                            description:$("#txtAciklama").val(),
+                            statusId:$("#ddlDurumlar").val(),
+
+
+                        },
+                        tags: $("#ddlEtiketler").val()
+                    },
+                    success: function () {
+                        $("#modalEkle").modal("hide");
+                        DataTable.ajax.reload();
+                    }
+                })
+            })
+
+        });
+
+
+
+        function durumlariDoldur() {
+            $.ajax({
+                url: '/Status/GetAllStatus',
+                type:'GET',
+                success: function (res) {
+                   // $("#ddlDurumlar").empty();
+                    $("#ddlDurumlar").empty().append(new Option("Lütfen seçim yapınız", 0));
+                    for (let item of res.data) {
+                        $("#ddlDurumlar").append(new Option(item.name,item.id));
+
+                    }
+
+                }
+            })
+        }
+
+        function oncelikleriDoldur() {
+            $.ajax({
+                url: '/Priority/GetAll',
+                type: 'GET',
+                success: function (res) {
+                    // $("#ddlDurumlar").empty();
+                    $("#ddlOncelikler").empty().append(new Option("Lütfen seçim yapınız", 0));
+                    for (let item of res) {
+                        $("#ddlOncelikler").append(new Option(item.name, item.id));
+
+                    }
+
+                }
+            })
+        }
+
+
+
+
+        function etiketleriDoldur() {
+            $.ajax({
+                url: '/Tag/GetAllTags',
+                type: 'GET',
+                success: function (res) {
+                    // $("#ddlDurumlar").empty();
+                    $("#ddlEtiketler").empty().append(new Option("CTRL Tuşuna basılı tutarak birden fazla seçim yapabilirsiniz", 0));
+                    for (let item of res.data) {
+                        $("#ddlEtiketler").append(new Option(item.name, item.id));
+
+                    }
+
+                }
+            })
+        }
+
+
+
+        var DataTable = $("#tblTodos").DataTable({
+            ajax: '/Todo/GetAll',
+            columns: [
+                { data: "id", title: 'ID' },
+                {
+                    data: "name", title: 'Başlık', render: function (data, type, row) {
+                        return `<a href="#" class="btn btn-success">${data}</a>`
+                    }
+                },
+                { data: "description", title: "Açıklama" },
+                { data: "statusName", title: 'Durum' },
+                {
+                    data: "tags", title: 'Etiketler', render: function (data, type, row) {
+                        let etiketler = "";
+                        for (let item of data) {
+                            etiketler += `<span>${item.name} <a onclick="removeTag(${row.id},${item.id},this)" title="Silmek için tıklayabilirsiniz" href="#" class="text-danger">X</a><br></span> `;
+                        }
+                        return etiketler;
+                    }
+                },
+                { data: "id", title: "İşlemler", render: function (data) {
+                    return `<a href="#" onclick="updateTodo(${data})" class="btn btn-warning btn-sm">Düzenle</a>`
+                }}
+
+            ],
+            "language": {
+                "url": "https://cdn.datatables.net/plug-ins/1.10.24/i18n/Turkish.json"
+            }
+        });
+
+        function removeTag(todoId, tagId, element) {
+
+            if (confirm("Todo ID = " + todoId + " ve Tag ID = " + tagId + " olan kaydı silmek istediğinizden emin misiniz ?")) {
+                $.ajax({
+                    url: '/Todo/RemoveTag',
+                    type: 'POST',
+                    data: {
+                        todoId: todoId,
+                        tagId: tagId
+                    },
+                    success: function () {
+                        DataTable.ajax.reload();
+                        // $(element).parent().remove();
+                    }
+                })
+            }
+        }
+
+        function updateTodo(todoId) {
+
+            $("#modalEkle").modal("show");
+
+            durumlariDoldur();
+            etiketleriDoldur();
+
+            $.ajax({
+                url:'/Todo/GetById/'+todoId,
+                type:'GET',
+                success: function (res) {
+                    $("#txtBaslik").val(res.name);
+                    $("#txtAciklama").val(res.description);
+                    $("#ddlDurumlar").val(res.status.id);
+
+                    let seciliEtiketler = [];
+                    for (let item of res.tags) {
+                        seciliEtiketler.push(item.id);
+                    }
+                    $("#ddlEtiketler").val(seciliEtiketler);
+                  //  console.log(res.tags[0].id);
+
+
+                }
+            });
+
+
+            $("#btnKaydet").off().click(function () {
+
+                $.ajax({
+                    url:'/Todo/Update',
+                    type:'POST',
+                    data: {
+                        todo: {
+                            id:todoId,
+                            name: $("#txtBaslik").val(),
+                            description: $("#txtAciklama").val(),
+                            statusId: $("#ddlDurumlar").val()
+                        },
+                        tags:$("#ddlEtiketler").val()
+                    },
+                    success: function () {
+                        $("#modalEkle").modal("hide");
+                        DataTable.ajax.reload();
+                    }
+                });
+            });
+
+
+        }
+    </script>
+}
