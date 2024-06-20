@@ -30,7 +30,7 @@ namespace ToDo.Web.Controllers
         [HttpPost]
         public IActionResult DeleteTag(int id)
         {
-            _tagRepository.DeleteById(id);
+            _tagRepository.Delete(id);
             
             return Ok("İşlem Başarılı");
         }

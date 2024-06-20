@@ -35,7 +35,7 @@ namespace ToDo.Web.Controllers
         [HttpPost]
         public IActionResult DeleteStatus(int id)
         {
-            _statusRepository.DeleteById(id);
+            _statusRepository.Delete(id);
             return Ok("İşlem Başarılı");
         }
 

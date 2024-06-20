@@ -1,20 +1,22 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using ToDo.Data;
+using ToDo.Models;
+using ToDo.Repository.Shared.Abstract;
 
 namespace ToDo.Web.Controllers
 {
     public class PriorityController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IRepository<Priority> _repo;
 
-        public PriorityController(ApplicationDbContext context)
+        public PriorityController(IRepository<Priority> repo)
         {
-            _context = context;
+            _repo = repo;
         }
 
         public IActionResult GetAll()
         {
-            return Json(_context.Priorities.ToList());
+            return Json(_repo.GetAll());
         }
     }
 }

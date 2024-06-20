@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using ToDo.Data;
+using ToDo.Repository.Abstract;
+using ToDo.Repository.Concrete;
 using ToDo.Repository.Shared.Abstract;
 using ToDo.Repository.Shared.Concrete;
 
@@ -8,7 +10,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
-
+builder.Services.AddScoped<ITodoRepository,TodoRepository>();
 builder.Services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
 
 builder.Services.AddControllersWithViews();

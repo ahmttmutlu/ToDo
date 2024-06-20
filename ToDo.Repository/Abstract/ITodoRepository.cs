@@ -5,19 +5,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ToDo.Models;
+using ToDo.Models.DTOs;
 using ToDo.Repository.Shared.Abstract;
 
 namespace ToDo.Repository.Abstract
 {
     public interface ITodoRepository : IRepository<Todo>
     {
-        IEnumerable<Todo> GetAll(bool isAdmin, int userId);
-        void DeleteToddoByUserId(int userId);
-        void DeleteRemoveTag(int todoId, int  tagId);
-
-        void Add(Todo todo , int[] tags);     
-        void Update(Todo todo , int[] tags);
-        void TodoComplete(int todoId);
+        IQueryable<TodoDto> GetAll(int userId);
+        void RemoveTag(int todoId, int tagId);
+         Todo Add(Todo todo, int userId, int[] tags);
 
     }
 }

@@ -2,21 +2,24 @@
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using ToDo.Data;
 using ToDo.Models;
+using ToDo.Repository.Abstract;
 
 namespace ToDo.Web.Controllers
 {
 
     public class UserController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly IUserRepository _repo;
 
-        public UserController(ApplicationDbContext context)
+        public UserController(IUserRepository repo)
         {
-            _context = context;
+            _repo = repo;
         }
+
         [Authorize(Roles = "User")]
         public IActionResult Profile()
         {
@@ -26,7 +29,7 @@ namespace ToDo.Web.Controllers
 
 
 
-            return View(_context.Users.Find(userId));
+            return View(_repo.GetById(userId));
         }
 
         public IActionResult Index()
@@ -40,7 +43,7 @@ namespace ToDo.Web.Controllers
         {
             if (user != null)
             {
-                AppUser appUser = _context.Users.FirstOrDefault(u => u.Name == user.Name && u.Password == user.Password);
+                AppUser appUser = _repo.GetFirstOrDefault(u => u.Name == user.Name && u.Password == user.Password);
                 if (appUser != null)
                 {
                     List<Claim> claims = new List<Claim>();
@@ -97,44 +100,33 @@ namespace ToDo.Web.Controllers
             //    TodoCount=todos.Where(t=>t.AppUserId==user.Id).ToList().Count(),
             //}) ;
 
-            var result = _context.Users.Select(user => new
-            {
-                user.Id,
-                user.Name,
-                user.Password,
-                user.IsAdmin,
-                user.Photo,
-                TodoCount = user.Todos.Count
-            });
-
-            return Json(new { data = result });
+            return Json(new { data = _repo.GetAllWithTodoCount() });
 
 
         }
+
+
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public IActionResult Add(AppUser user)
         {
-            _context.Users.Add(user);
-            _context.SaveChanges();
-            return Ok(user);
+
+            return Ok(_repo.Add(user));
         }
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public IActionResult Delete(AppUser user)
         {
-            _context.Users.Remove(user);
-            _context.SaveChanges();
-            return Ok(user.Id);
+
+            return Ok(_repo.Delete(user.Id) is object);
 
         }
         [Authorize(Roles = "Admin")]
         [HttpPost]
         public IActionResult Update(AppUser user)
         {
-            _context.Users.Update(user);
-            _context.SaveChanges();
-            return Ok(user);
+
+            return Ok(_repo.Update(user));
         }
 
         [Authorize(Roles = "User")]
@@ -159,8 +151,7 @@ namespace ToDo.Web.Controllers
                 user.Photo = dosyaAdi;
 
 
-                _context.Users.Update(user);
-                _context.SaveChanges();
+                _repo.Update(user);
             }
             return RedirectToAction("Index", "Home");
         }
@@ -169,20 +160,20 @@ namespace ToDo.Web.Controllers
 
 
 
-        [Authorize(Roles = "Admin")]
-        [HttpPost]
-        public IActionResult GetById(int id)
-        {
-            return Json(_context.Users.Where(u => u.Id == id).Select(u => new
-            {
-                u.Id,
-                u.Name,
-                u.Password,
-                u.IsAdmin,
-                TodoCount = u.Todos.Count
+        //[Authorize(Roles = "Admin")]
+        //[HttpPost]
+        //public IActionResult GetById(int id)
+        //{
+        //    return Json(_context.Users.Where(u => u.Id == id).Select(u => new
+        //    {
+        //        u.Id,
+        //        u.Name,
+        //        u.Password,
+        //        u.IsAdmin,
+        //        TodoCount = u.Todos.Count
 
-            }).First());
-        }
+        //    }).First());
+        //}
 
     }
 }

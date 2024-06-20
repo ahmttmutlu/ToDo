@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
 using ToDo.Data;
 using ToDo.Models;
+using ToDo.Repository.Abstract;
 
 
 namespace ToDo.Web.Controllers
@@ -11,11 +12,11 @@ namespace ToDo.Web.Controllers
     [Authorize(Roles = "User")]
     public class TodoController : Controller
     {
-        private readonly ApplicationDbContext _context;
+       private readonly ITodoRepository _todoRepository;
 
-        public TodoController(ApplicationDbContext context)
+        public TodoController(ITodoRepository repository)
         {
-            _context = context;
+            _todoRepository = repository;
         }
 
 
@@ -32,47 +33,23 @@ namespace ToDo.Web.Controllers
         public IActionResult GetAll()
         {
 
-            int userId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
+            
             return Json(new
             {
-                data = _context.Todos.Where(t => t.AppUserId == userId && t.Status.Name != "Tamamlandı").Select(t => new
-                {
-                    t.Id,
-                    t.Name,
-                    t.Description,
-                    PriorityColor = t.Priority.Color,
-                    StatusName = t.Status.Name,
-                    Tags = t.Tags.Select(tag => new { tag.Name, tag.Id })
-                    
-
-
-
-
-                })
+                data = _todoRepository.GetAll(int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)))
             });
         }
 
         public IActionResult RemoveTag(int todoId, int tagId)
         {
-            Todo todo = _context.Todos.Include(t => t.Tags).FirstOrDefault(t => t.Id == todoId);
-            Tag tag = _context.Tags.Find(tagId);
-
-            todo.Tags.Remove(tag);
-            _context.Todos.Update(todo);
-            _context.SaveChanges();
-
+            _todoRepository.RemoveTag(todoId, tagId);
             return Ok("işlem başarılı");
 
         }
 
         public IActionResult Add(Todo todo, int[] tags)
         {
-            todo.Tags = _context.Tags.Where(t => tags.Contains(t.Id)).ToList();
-            todo.AppUserId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier));
-
-            _context.Todos.Add(todo);
-            _context.SaveChanges();
-
+            _todoRepository.Add(todo, int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)), tags);
             return Ok();
         }
 
@@ -80,14 +57,7 @@ namespace ToDo.Web.Controllers
         public IActionResult GetById(int id)
         {
 
-            return Json(_context.Todos.Where(t => t.Id == id).Select(t => new Todo
-            {
-                Name = t.Name,
-                Id = t.Id,
-                Description = t.Description,
-                Status = t.Status,
-                Tags = t.Tags
-            }).First());
+            return Json(_todoRepository.GetById(id));
 
         }
         public IActionResult Update(Todo todo, int[] tags)

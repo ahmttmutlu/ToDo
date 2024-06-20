@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Net.Http;
 using System.Text;
 using System.Threading.Tasks;
 using ToDo.Data;
@@ -19,7 +20,7 @@ namespace ToDo.Repository.Shared.Concrete
         public Repository(ApplicationDbContext context)
         {
             _context = context;
-            _dbSet = context.Set<T>();
+            _dbSet = _context.Set<T>();
         }
 
         public T Add(T entity)
@@ -29,23 +30,11 @@ namespace ToDo.Repository.Shared.Concrete
             return entity;
         }
 
-        //public T Delete(T entity)
-        //{
-        //    _dbSet.Remove(entity);
-        //    Save(); 
-        //    return entity;
-        //}
-
-        public T DeleteById(int id)
+        public void Delete(int id)
         {
-            T entity = _dbSet.Find(id);
-            if(entity!= null)
-            {
-                _dbSet.Remove(entity);
-                Save();
 
-            }
-            return entity;
+            _dbSet.Remove(GetById(id));
+            Save();
         }
 
         public IQueryable<T> GetAll()
@@ -53,24 +42,29 @@ namespace ToDo.Repository.Shared.Concrete
             return _dbSet;
         }
 
-        public IQueryable<T> GetAll(Expression<Func<T, bool>> filter)
+        public IQueryable<T> GetAll(Expression<Func<T, bool>> expression)
         {
-            return GetAll().Where(filter);
+
+            //_dbSet.Where(expression);
+            return GetAll().Where(expression);
+
         }
 
-        public T GetById(int id)
+        public virtual T GetById(int id)
         {
             return _dbSet.Find(id);
+
         }
 
-        public T GetFirstOrDefault(Expression<Func<T, bool>> filter)
+        public T GetFirstOrDefault(Expression<Func<T, bool>> expression)
         {
-            return _dbSet.FirstOrDefault(filter);
+            return _dbSet.FirstOrDefault(expression);
         }
 
         public void Save()
         {
-          _context.SaveChanges();
+            
+            _context.SaveChanges();
         }
 
         public T Update(T entity)
